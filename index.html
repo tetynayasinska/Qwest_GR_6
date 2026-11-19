@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Піксель & Вектор: Квест з комп'ютерної графіки 🎨⚡</title>
+    <style>
+        :root {
+            --bg-dark: #0f1021;
+            --card-bg: #191b34;
+            --card-inner: #232647;
+            --neon-cyan: #00f5d4;
+            --neon-pink: #ff2a85;
+            --neon-yellow: #ffd166;
+            --neon-purple: #9b5de5;
+            --neon-green: #06d6a0;
+            --text-main: #f4f6ff;
+            --text-muted: #b8bdd9;
+            --border-glow: rgba(0, 245, 212, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #281b4c 0%, var(--bg-dark) 55%, #090a14 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .quest-wrapper {
+            width: 100%;
+            max-width: 740px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-glow);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(155, 93, 229, 0.2);
+            margin: 8px 0 28px;
+        }
+
+        .hero-header {
+            text-align: center;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 18px;
+        }
+
+        .hero-header h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-yellow), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .hero-header p {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+        }
+
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-inner);
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-weight: 700;
+        }
+
+        .badge-step {
+            color: var(--neon-yellow);
+        }
+
+        .badge-score {
+            color: var(--neon-green);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 22px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            transition: width 0.45s ease;
+        }
+
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+            animation: slideUp 0.35s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .problem-card {
+            background: linear-gradient(135deg, rgba(255, 42, 133, 0.16), rgba(155, 93, 229, 0.14));
+            border-left: 5px solid var(--neon-pink);
+            border-radius: 14px;
+            padding: 15px 16px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .problem-card h2 {
+            font-size: 1.08rem;
+            color: #ff7eb6;
+            margin-bottom: 6px;
+        }
+
+        .theory-card {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.12), rgba(0, 187, 249, 0.08));
+            border: 1.5px dashed var(--neon-cyan);
+            border-radius: 14px;
+            padding: 15px 16px;
+            margin-bottom: 18px;
+            line-height: 1.55;
+        }
+
+        .theory-card h3 {
+            font-size: 1.05rem;
+            color: var(--neon-cyan);
+            margin-bottom: 6px;
+        }
+
+        .theory-card p {
+            color: var(--text-main);
+            font-size: 0.96rem;
+        }
+
+        .task-prompt {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--neon-yellow);
+            margin-bottom: 14px;
+            line-height: 1.45;
+        }
+
+        /* Інтерактивна симуляція графічного редактора */
+        .editor-sim {
+            background: #121326;
+            border: 2px solid var(--neon-purple);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.45);
+        }
+
+        .editor-topbar {
+            background: #25284b;
+            padding: 9px 14px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .editor-app-name {
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .editor-meta {
+            color: var(--neon-yellow);
+            font-weight: 600;
+        }
+
+        .editor-workspace {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .sim-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .sim-tool-btn {
+            background: #2b2f58;
+            color: var(--text-main);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            padding: 8px 13px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .sim-tool-btn:hover {
+            border-color: var(--neon-cyan);
+            transform: translateY(-1px);
+        }
+
+        .sim-tool-btn.active-tool {
+            background: var(--neon-cyan);
+            color: #090a14;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 245, 212, 0.5);
+        }
+
+        .canvas-box {
+            background: #ffffff;
+            color: #111111;
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            max-width: 460px;
+            min-height: 170px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #3c4278;
+        }
+
+        .pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 30px);
+            grid-template-rows: repeat(4, 30px);
+            gap: 2px;
+            background: #cbd5e1;
+            padding: 2px;
+            border-radius: 6px;
+        }
+
+        .pixel-cell {
+            background: #ffffff;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .pixel-cell:hover {
+            transform: scale(0.92);
+        }
+
+        .choices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-btn {
+            width: 100%;
+            text-align: left;
+            background: var(--card-inner);
+            color: var(--text-main);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            padding: 13px 16px;
+            border-radius: 12px;
+            font-size: 0.98rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .choice-btn:hover:not(:disabled) {
+            border-color: var(--neon-yellow);
+            background: #2d315c;
+            transform: translateX(3px);
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.75;
+            cursor: default;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 13px 18px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-yellow));
+            color: #0b0d1e;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 6px 20px rgba(0, 245, 212, 0.3);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(255, 209, 102, 0.4);
+        }
+
+        .feedback-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            min-height: 24px;
+            display: none;
+        }
+
+        .feedback-box.show {
+            display: block;
+        }
+
+        .feedback-ok {
+            background: rgba(6, 214, 160, 0.16);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .feedback-err {
+            background: rgba(255, 42, 133, 0.16);
+            border: 1px solid var(--neon-pink);
+            color: #ff85b8;
+        }
+
+        .final-summary {
+            text-align: center;
+            background: var(--card-inner);
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid var(--neon-green);
+            margin-bottom: 20px;
+        }
+
+        .final-score-big {
+            font-size: 2rem;
+            color: var(--neon-yellow);
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .form-field {
+            margin-bottom: 14px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            font-size: 0.95rem;
+        }
+
+        .form-field input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            background: #101226;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 10px;
+            }
+            .quest-wrapper {
+                padding: 16px;
+                border-radius: 16px;
+            }
+            .hero-header h1 {
+                font-size: 1.4rem;
+            }
+            .pixel-grid {
+                grid-template-columns: repeat(6, 26px);
+                grid-template-rows: repeat(4, 26px);
+            }
+            .choice-btn, .primary-btn, .sim-tool-btn {
+                font-size: 0.92rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quest-wrapper">
+    <header class="hero-header">
+        <h1>🎨 КІБЕР-СТУДІЯ: ТАЄМНИЦІ КОМП'ЮТЕРНОЇ ГРАФІКИ 🚀</h1>
+        <p>Врятуй шкільний арт-проєкт, розшифруй пікселі й приборкай векторні криві! ✨</p>
+    </header>
+
+    <div class="status-bar">
+        <div class="badge-step">🧩 Завдання: <span id="step-num">1</span> / 12</div>
+        <div class="badge-score">🏆 Рахунок: <span id="score-num">0</span> / 12</div>
+    </div>
+
+    <div class="progress-track">
+        <div class="progress-fill" id="progress-bar"></div>
+    </div>
+
+    <!-- ЗАВДАННЯ 1 -->
+    <section id="stage-1" class="stage active">
+        <div class="problem-card">
+            <h2>🚨 Проблема старту: Збій у шкільній медіалабораторії</h2>
+            <p>До шкільної виставки залишилося 40 хвилин, а арт-сервер заблокував доступ до графічних файлів! Щоб перезапустити студію, спершу пригадай, що вивчає комп'ютерна графіка та які бувають графічні зображення. 🛠️</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 1</h3>
+            <p><strong>Комп'ютерна графіка</strong> — це розділ інформатики, який вивчає способи та засоби створення й опрацювання графічних зображень за допомогою комп'ютерної техніки. Її основним об'єктом є <strong>графічне зображення</strong>: малюнок, фотографія, діаграма, схема, ескіз, плакат, кадр мультфільму або навіть QR-код. Створювати їх можна в графічних редакторах та інших програмах (наприклад, генераторах QR-кодів чи табличних процесорах). 💡</p>
+        </div>
+        <div class="task-prompt">Завдання 1. Що є основним об'єктом комп'ютерної графіки? 🎯</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(1, false)">А) Текстовий документ із формулами 📝</button>
+            <button class="choice-btn" onclick="handleChoice(1, true)">Б) Графічне зображення (малюнок, фотографія, схема, діаграма, QR-код тощо) 🖼️📊</button>
+            <button class="choice-btn" onclick="handleChoice(1, false)">В) Лише звуковий файл або мелодія 🎵</button>
+        </div>
+        <div id="fb-1" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 2 -->
+    <section id="stage-2" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 2: Мозаїка на екрані</h2>
+            <p>Учень наблизив фотографію лісового гриба, і замість плавних ліній побачив дрібні кольорові квадратики! Треба визначити, з чого побудоване растрове зображення. 🔍</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 2</h3>
+            <p><strong>Растрове графічне зображення</strong> складається з окремих маленьких прямокутників — <strong>пікселів</strong> (від англ. <em>picture element</em> — елемент зображення). Воно схоже на мозаїку. Найменший об'єкт растрового зображення — піксель — має дві основні властивості: <strong>розташування</strong> та <strong>колір</strong>. 🧩</p>
+        </div>
+        <div class="task-prompt">Завдання 2. Симулятор растрового полотна: клікни по клітинках, щоб зафарбувати «пікселі», і обери правильну відповідь про найменший елемент растру! 🎨</div>
+        <div class="editor-sim">
+            <div class="editor-topbar">
+                <span class="editor-app-name">🖌️ RasterGrid Studio</span>
+                <span class="editor-meta">Клікни на клітинки, щоб перевірити пікселі</span>
+            </div>
+            <div class="editor-workspace">
+                <div class="pixel-grid" id="grid-stage-2"></div>
+            </div>
+        </div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(2, true)">А) Піксель — найменший елемент растрового зображення, має розташування та колір 🟦</button>
+            <button class="choice-btn" onclick="handleChoice(2, false)">Б) Векторний примітив — відрізок або крива без кольору 📏</button>
+            <button class="choice-btn" onclick="handleChoice(2, false)">В) Символ абетки на клавіатурі ⌨️</button>
+        </div>
+        <div id="fb-2" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 3 -->
+    <section id="stage-3" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 3: Розмите фото при масштабуванні</h2>
+            <p>Коли логотип зберігся як растровий малюнок і його розтягнули на великий банер, краї стали «східчастими» та нечіткими. Як називається це явище? 😬</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 3</h3>
+            <p>Під час збільшення масштабу перегляду або розмірів растрового зображення стає помітною його мозаїчна структура. Це явище називають <strong>пікселізацією зображення</strong>. Саме тому растрові зображення мають недолік — пікселізацію при збільшенні. 🔎</p>
+        </div>
+        <div class="task-prompt">Завдання 3. Симулятор масштабування: перемикай масштаб і вибери назву явища, яке виникає під час сильного збільшення растрового зображення! 🔍</div>
+        <div class="editor-sim">
+            <div class="editor-topbar">
+                <span class="editor-app-name">🖼️ ZoomInspector</span>
+                <span class="editor-meta" id="zoom-label">Масштаб: 100%</span>
+            </div>
+            <div class="editor-workspace">
+                <div class="sim-controls">
+                    <button class="sim-tool-btn active-tool" id="zoom-100" onclick="setZoomSim(100)">100% (Чітко)</button>
+                    <button class="sim-tool-btn" id="zoom-400" onclick="setZoomSim(400)">400% (Збільшення)</button>
+                </div>
+                <div class="canvas-box">
+                    <div id="zoom-preview" style="font-size: 2rem; font-weight: 800; color: #ff2a85; transition: all 0.25s ease;">🍄 РАСТР</div>
+                </div>
+            </div>
+        </div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(3, false)">А) Векторизація 📐</button>
+            <button class="choice-btn" onclick="handleChoice(3, true)">Б) Пікселізація зображення 🧱</button>
+            <button class="choice-btn" onclick="handleChoice(3, false)">В) Анімація кадрів 🎬</button>
+        </div>
+        <div id="fb-3" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 4 -->
+    <section id="stage-4" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 4: Параметри фото для друку</h2>
+            <p>Друкарня просить уточнити характеристики растрового малюнка: його ширину і висоту, щільність точок на дюйм та кількість кольорів. Які це властивості? 🖨️</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 4</h3>
+            <p>Растрове графічне зображення як єдиний об'єкт має три ключові властивості: <strong>розміри</strong> (ширина і висота в см, дюймах або пікселях), <strong>роздільність</strong> (кількість пікселів на одиницю довжини — у <em>dpi</em> або <em>пікселів/см</em>) та <strong>глибина кольору</strong> (визначає кількість кольорів, які можуть бути використані в зображенні). 🎨</p>
+        </div>
+        <div class="task-prompt">Завдання 4. Що визначає властивість «глибина кольору» растрового зображення? 🌈</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(4, false)">А) Товщину контуру геометричної фігури ✏️ </button>
+            <button class="choice-btn" onclick="handleChoice(4, false)">Б) Кількість сторінок у текстовому файлі 📄</button>
+            <button class="choice-btn" onclick="handleChoice(4, true)">В) Кількість кольорів, які можуть бути використані в зображенні 🎨</button>
+        </div>
+        <div id="fb-4" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 5 -->
+    <section id="stage-5" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 5: Вибір формату растрового файлу</h2>
+            <p>Треба зберегти кольорову фотографію так, щоб файл був компактним, а також знати формат для анімації чи стиснення без втрати якості. Які формати належать до растрових? 💾</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 5</h3>
+            <p>До форматів файлів <strong>растрових зображень</strong> належать: <strong>BMP</strong> (<code>.bmp</code> — без стиснення), <strong>JPEG</strong> (<code>.jpg</code>, <code>.jpeg</code> — зі стисненням і частковою втратою якості), <strong>GIF</strong> (<code>.gif</code> — зокрема для анімованих зображень) та <strong>PNG</strong> (<code>.png</code> — стиснення без втрати даних і якості). 📁</p>
+        </div>
+        <div class="task-prompt">Завдання 5. Який з наведених рядків містить лише формати растрових графічних файлів? 🗂️</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(5, false)">А) AI, SVG, WMF 📐</button>
+            <button class="choice-btn" onclick="handleChoice(5, true)">Б) BMP, JPEG, GIF, PNG 🖼️✨</button>
+            <button class="choice-btn" onclick="handleChoice(5, false)">В) DOCX, XLSX, PPTX 📊</button>
+        </div>
+        <div id="fb-5" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 6 -->
+    <section id="stage-6" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 6: Геометричний конструктор емблеми</h2>
+            <p>Дизайнер створює емблему з кіл, відрізків, багатокутників і кривих, щоб її можна було легко змінювати без втрати якості. Це вже інший вид графіки! 📐</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 6</h3>
+            <p><strong>Векторне зображення</strong> складається з окремих геометричних фігур — <strong>графічних примітивів</strong> (відрізків, багатокутників, кривих, овалів тощо). Кодування у векторній графіці описує властивості примітивів: <strong>розмір, форму, колір і товщину лінії контуру, колір і спосіб заливки</strong> (наприклад, градієнтну). Векторні зображення не зазнають пікселізації, а до редагування кожного елемента можна повернутися в будь-який час! 🎯</p>
+        </div>
+        <div class="task-prompt">Завдання 6. Симулятор векторного примітива: змінюй властивості фігури та обери правильне твердження про векторну графіку! 🔺</div>
+        <div class="editor-sim">
+            <div class="editor-topbar">
+                <span class="editor-app-name">📐 VectorPrim Studio</span>
+                <span class="editor-meta">Властивості примітива</span>
+            </div>
+            <div class="editor-workspace">
+                <div class="sim-controls">
+                    <button class="sim-tool-btn active-tool" id="vec-fill-1" onclick="setVectorStyle('gradient')">Градієнт</button>
+                    <button class="sim-tool-btn" id="vec-fill-2" onclick="setVectorStyle('solid')">Суцільна</button>
+                    <button class="sim-tool-btn" id="vec-border" onclick="toggleVectorBorder()">Контур: 4px</button>
+                </div>
+                <div class="canvas-box">
+                    <div id="vector-shape" style="width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg, #ff2a85, #ffd166); border: 4px solid #191b34; transition: all 0.25s ease;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(6, false)">А) Векторне зображення складається з пікселів і втрачає якість при збільшенні 🧩</button>
+            <button class="choice-btn" onclick="handleChoice(6, true)">Б) Векторне зображення будується з графічних примітивів і не зазнає пікселізації при масштабуванні ✨📐</button>
+            <button class="choice-btn" onclick="handleChoice(6, false)">В) Векторні зображення можна отримати лише фотокамерою 📷</button>
+        </div>
+        <div id="fb-6" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 7 -->
+    <section id="stage-7" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 7: Пошук векторного формату</h2>
+            <p>Команда розробників готує ілюстрацію для сайту та креслення, де важлива масштабованість без втрати чіткості. Які формати належать до векторних? 🌐</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 7</h3>
+            <p>До форматів файлів <strong>векторних зображень</strong> належать: <strong>AI</strong> (<code>.ai</code> — формат редактора Adobe Illustrator), <strong>SVG</strong> (<code>.svg</code> — масштабована векторна графіка, широко застосовується для вебсайтів і креслень) та <strong>WMF</strong> (<code>.wmf</code>, <code>.emf</code>, <code>.wmz</code>, <code>.emz</code> — метафайли Windows). 🖋️</p>
+        </div>
+        <div class="task-prompt">Завдання 7. Який формат файлів широко застосовують для створення креслень і вебсайтів та підтримує масштабування векторної графіки? 💻</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(7, false)">А) BMP 🧱</button>
+            <button class="choice-btn" onclick="handleChoice(7, true)">Б) SVG (а також AI та WMF) 📐🌐</button>
+            <button class="choice-btn" onclick="handleChoice(7, false)">В) JPG 📷</button>
+        </div>
+        <div id="fb-7" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 8 -->
+    <section id="stage-8" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 8: Растр чи вектор — що обрати?</h2>
+            <p>Перед нами два завдання: створити реалістичну репродукцію пейзажу і розробити фірмовий знак (логотип), який друкуватимуть і на ручці, і на білборді. Як правильно обрати вид графіки? 🤔</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 8</h3>
+            <p><strong>Растрова графіка</strong> краще передає реалістичність і природність кольорів, а також дозволяє отримувати зображення з фотокамер і сканерів, але створює більші файли та зазнає пікселізації. <strong>Векторна графіка</strong> має менші файли, зберігає якість при збільшенні й легко редагується по об'єктах, але складніше точно передає складне природне середовище. ⚖️</p>
+        </div>
+        <div class="task-prompt">Завдання 8. Який вибір найдоцільніший для фірмового знаку (логотипу), який потрібно масштабувати без втрати якості? 🏷️</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(8, true)">А) Векторна графіка — не втрачає якості при збільшенні та має невеликий розмір файлу 🎯</button>
+            <button class="choice-btn" onclick="handleChoice(8, false)">Б) Лише нестиснутий растр великого розміру для кожного виступу 🐘</button>
+            <button class="choice-btn" onclick="handleChoice(8, false)">В) Звичайна текстова таблиця 📋</button>
+        </div>
+        <div id="fb-8" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 9 -->
+    <section id="stage-9" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 9: Правильний круг у графічному редакторі</h2>
+            <p>Під час малювання сонця в редакторі замість рівного кола виходить витягнутий овал! Яку клавішу допомагають утримувати під час малювання фігури, щоб зберегти пропорції? ☀️⭕</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 9</h3>
+            <p>Під час роботи з інструментами малювання фігур у графічних редакторах (наприклад, <em>Овал</em>) утримання клавіші <strong>Shift</strong> допомагає намалювати правильний круг, а також коректно орієнтувати лінії чи зберігати пропорції. ⌨️</p>
+        </div>
+        <div class="task-prompt">Завдання 9. Симулятор фігур: натисни кнопку «Намалювати коло» та обери клавішу, яку утримують для створення правильного кола! ⭕</div>
+        <div class="editor-sim">
+            <div class="editor-topbar">
+                <span class="editor-app-name">🎨 PaintSim 6</span>
+                <span class="editor-meta">Інструмент: Овал + Shift</span>
+            </div>
+            <div class="editor-workspace">
+                <div class="sim-controls">
+                    <button class="sim-tool-btn active-tool" onclick="drawCircleSim(true)">☀️ Коло (з Shift)</button>
+                    <button class="sim-tool-btn" onclick="drawCircleSim(false)">🥚 Овал (без Shift)</button>
+                </div>
+                <div class="canvas-box">
+                    <div id="sim-circle" style="width: 84px; height: 84px; border-radius: 50%; background: #ffd166; border: 4px solid #ff7b00; transition: all 0.25s ease;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(9, true)">А) Клавішу Shift ⇧</button>
+            <button class="choice-btn" onclick="handleChoice(9, false)">Б) Клавішу CapsLock 🔒</button>
+            <button class="choice-btn" onclick="handleChoice(9, false)">В) Клавішу Tab ⇥</button>
+        </div>
+        <div id="fb-9" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 10 -->
+    <section id="stage-10" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 10: Білий квадрат навколо краплі дощу</h2>
+            <p>Ти вирізав краплю дощу та переносиш її на малюнок, але навколо неї тягнеться білий прямокутник, який закриває інші елементи! Як цього уникнути? 💧⬜</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 10</h3>
+            <p>Під час виділення та перенесення фрагментів зображення в графічному редакторі використовують режим <strong>Прозоре виділення</strong>, щоб фон виділеної області не перекривав інші елементи малюнка. Також для зміни розміру фрагмента використовують <strong>кутові маркери</strong> виділеної області. ✂️</p>
+        </div>
+        <div class="task-prompt">Завдання 10. Симулятор виділення: перемкни режим виділення на полотні та вибери правильний інструмент! ✨</div>
+        <div class="editor-sim">
+            <div class="editor-topbar">
+                <span class="editor-app-name">✂️ SelectionLab</span>
+                <span class="editor-meta" id="trans-status">Режим: Звичайне виділення</span>
+            </div>
+            <div class="editor-workspace">
+                <div class="sim-controls">
+                    <button class="sim-tool-btn" id="btn-opaque" onclick="toggleTransparentSim(false)">⬜ Непрозоре тло</button>
+                    <button class="sim-tool-btn active-tool" id="btn-trans" onclick="toggleTransparentSim(true)">💧 Прозоре виділення</button>
+                </div>
+                <div class="canvas-box" style="background: repeating-linear-gradient(45deg, #e0f7fa, #e0f7fa 10px, #b2ebf2 10px, #b2ebf2 20px);">
+                    <div id="drop-box" style="padding: 10px 16px; border-radius: 10px; background: transparent; font-size: 1.6rem; transition: all 0.25s ease;">💧 Крапля</div>
+                </div>
+            </div>
+        </div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(10, false)">А) Видалити весь малюнок і почати спочатку 🗑️ </button>
+            <button class="choice-btn" onclick="handleChoice(10, true)">Б) Увімкнути параметр «Прозоре виділення» 💧✅</button>
+            <button class="choice-btn" onclick="handleChoice(10, false)">В) Замалювати все суцільною лінією без пробілів 🖍️</button>
+        </div>
+        <div id="fb-10" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 11 -->
+    <section id="stage-11" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Проблема 11: Розмір полотна перед малюванням</h2>
+            <p>Перед початком роботи в редакторі важливо задати точні розміри майбутнього малюнка в пікселях, наприклад ширину та висоту. Де це налаштовують? 📏</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до завдання 11</h3>
+            <p>Розміри растрового зображення (ширину та висоту) можна задавати в одиницях довжини (сантиметрах, дюймах) або в <strong>пікселях</strong>. У редакторі Paint точні розміри малюнка в пікселях задають у вікні <em>Властивості зображення</em> (через меню <em>Файл → Властивості</em>). ⚙️</p>
+        </div>
+        <div class="task-prompt">Завдання 11. У яких одиницях вимірюють розміри (ширину і висоту) растрового зображення та його пікселів? 📐</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(11, false)">А) Лише у кілометрах і хвилинах ⏱️ </button>
+            <button class="choice-btn" onclick="handleChoice(11, true)">Б) У пікселях (а також у сантиметрах або дюймах) 📏🔢</button>
+            <button class="choice-btn" onclick="handleChoice(11, false)">В) У градусах Цельсія 🌡️</button>
+        </div>
+        <div id="fb-11" class="feedback-box"></div>
+    </section>
+
+    <!-- ЗАВДАННЯ 12 -->
+    <section id="stage-12" class="stage">
+        <div class="problem-card">
+            <h2>🚨 Фінальний бос: Останній крок до виставки!</h2>
+            <p>Арт-сервер майже розблоковано! Залишилося підтвердити головне правило роботи з графікою: як зберігати та редагувати малюнки, щоб не втратити результат. 🏆</p>
+        </div>
+        <div class="theory-card">
+            <h3>🔑 Теорія — ключ до фінального завдання</h3>
+            <p>Усі графічні роботи зберігаються у файлах певних форматів. При виборі формату важливо враховувати мету: <strong>PNG</strong> стискає растрове зображення без втрати якості, <strong>JPEG</strong> зменшує розмір файлу зі стисненням (із частковою втратою якості), <strong>GIF</strong> підходить у тому числі для анімації, а <strong>векторні формати</strong> (<code>SVG</code>, <code>AI</code>, <code>WMF</code>) зберігають об'єкти для масштабування без пікселізації та подальшого редагування примітивів. 🌟</p>
+        </div>
+        <div class="task-prompt">Завдання 12. Який формат растрового зображення стискає дані БЕЗ втрати якості зображення? 🛡️</div>
+        <div class="choices-list">
+            <button class="choice-btn" onclick="handleChoice(12, false)">А) Текстовий файл 📄</button>
+            <button class="choice-btn" onclick="handleChoice(12, true)">Б) PNG 🖼️✅</button>
+            <button class="choice-btn" onclick="handleChoice(12, false)">В) Аудіоформат 🎧</button>
+        </div>
+        <div id="fb-12" class="feedback-box"></div>
+    </section>
+
+    <!-- ФІНАЛ ТА НАДСИЛАННЯ РЕЗУЛЬТАТУ -->
+    <section id="stage-final" class="stage">
+        <div class="final-summary">
+            <h2>🎉 ВІТАЄМО! КВЕСТ «КОМП'ЮТЕРНА ГРАФІКА» ПРОЙДЕНО! 🎨🚀</h2>
+            <p>Ти розібрався з пікселями, векторними примітивами, форматами файлів та інструментами графічних редакторів! 👏</p>
+            <div class="final-score-big"><span id="final-score">0</span> / 12 балів 🌟</div>
+            <p id="rank-text" style="color: var(--neon-cyan); font-weight: 700;"></p>
+        </div>
+
+        <form id="result-form" action="https://formspree.io/f/myewjaqq" method="POST">
+            <input type="hidden" name="Тема_квесту" value="Комп'ютерна графіка (6 клас)">
+            <input type="hidden" id="form-score" name="Бали" value="0">
+
+            <div class="form-field">
+                <label for="student-name">👤 Прізвище та ім'я учня / учениці:</label>
+                <input type="text" id="student-name" name="Учень" placeholder="Наприклад: Олена Шевченко" required>
+            </div>
+
+            <div class="form-field">
+                <label for="student-class">🏫 Клас:</label>
+                <input type="text" id="student-class" name="Клас" placeholder="Наприклад: 6-Б" required>
+            </div>
+
+            <button type="submit" class="primary-btn">📤 Надіслати результат вчителю</button>
+        </form>
+        <div id="submit-status" class="feedback-box"></div>
+    </section>
+</div>
+
+<script>
+    const totalStages = 12;
+    let currentStage = 1;
+    let score = 0;
+    const failedOnce = {};
+
+    // Ініціалізація симулятора піксельної сітки у завданні 2
+    const gridEl = document.getElementById('grid-stage-2');
+    if (gridEl) {
+        const presetColors = ['#ff2a85', '#00f5d4', '#ffd166', '#9b5de5', '#06d6a0'];
+        for (let i = 0; i < 24; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'pixel-cell';
+            if ([7, 8, 12, 13, 14, 15, 19, 20].includes(i)) {
+                cell.style.background = '#ffd166';
+            }
+            cell.addEventListener('click', () => {
+                const nextColor = presetColors[Math.floor(Math.random() * presetColors.length)];
+                cell.style.background = cell.style.background ? '' : nextColor;
+            });
+            gridEl.appendChild(cell);
+        }
+    }
+
+    // Симулятори у завданнях 3, 6, 9, 10
+    function setZoomSim(level) {
+        const preview = document.getElementById('zoom-preview');
+        const label = document.getElementById('zoom-label');
+        const btn100 = document.getElementById('zoom-100');
+        const btn400 = document.getElementById('zoom-400');
+
+        if (level === 100) {
+            preview.style.transform = 'scale(1)';
+            preview.style.letterSpacing = '0px';
+            preview.style.textShadow = 'none';
+            label.textContent = 'Масштаб: 100% (Чітко)';
+            btn100.classList.add('active-tool');
+            btn400.classList.remove('active-tool');
+        } else {
+            preview.style.transform = 'scale(1.45)';
+            preview.style.letterSpacing = '6px';
+            preview.style.textShadow = '3px 3px 0 #00f5d4, -3px -3px 0 #ffd166';
+            label.textContent = 'Масштаб: 400% (Помітна пікселізація!)';
+            btn400.classList.add('active-tool');
+            btn100.classList.remove('active-tool');
+        }
+    }
+
+    function setVectorStyle(mode) {
+        const shape = document.getElementById('vector-shape');
+        const b1 = document.getElementById('vec-fill-1');
+        const b2 = document.getElementById('vec-fill-2');
+        if (mode === 'gradient') {
+            shape.style.background = 'linear-gradient(135deg, #ff2a85, #ffd166)';
+            b1.classList.add('active-tool');
+            b2.classList.remove('active-tool');
+        } else {
+            shape.style.background = '#00f5d4';
+            b2.classList.add('active-tool');
+            b1.classList.remove('active-tool');
+        }
+    }
+
+    function toggleVectorBorder() {
+        const shape = document.getElementById('vector-shape');
+        const btn = document.getElementById('vec-border');
+        const isThick = shape.style.borderWidth === '8px';
+        shape.style.borderWidth = isThick ? '4px' : '8px';
+        shape.style.borderColor = isThick ? '#191b34' : '#9b5de5';
+        btn.textContent = isThick ? 'Контур: 4px' : 'Контур: 8px';
+    }
+
+    function drawCircleSim(isCircle) {
+        const circle = document.getElementById('sim-circle');
+        if (isCircle) {
+            circle.style.width = '84px';
+            circle.style.height = '84px';
+            circle.style.borderRadius = '50%';
+        } else {
+            circle.style.width = '140px';
+            circle.style.height = '70px';
+            circle.style.borderRadius = '50%';
+        }
+    }
+
+    function toggleTransparentSim(isTransparent) {
+        const dropBox = document.getElementById('drop-box');
+        const status = document.getElementById('trans-status');
+        const bTrans = document.getElementById('btn-trans');
+        const bOpaque = document.getElementById('btn-opaque');
+
+        if (isTransparent) {
+            dropBox.style.background = 'transparent';
+            dropBox.style.color = '#111111';
+            status.textContent = 'Режим: Прозоре виділення ✨';
+            bTrans.classList.add('active-tool');
+            bOpaque.classList.remove('active-tool');
+        } else {
+            dropBox.style.background = '#ffffff';
+            dropBox.style.color = '#111111';
+            status.textContent = 'Режим: Біле непрозоре тло ⬜';
+            bOpaque.classList.add('active-tool');
+            bTrans.classList.remove('active-tool');
+        }
+    }
+
+    function updateHud() {
+        document.getElementById('step-num').textContent = Math.min(currentStage, totalStages);
+        document.getElementById('score-num').textContent = score.toFixed(1).replace(/\.0$/, '');
+        const pct = ((currentStage - 1) / totalStages) * 100;
+        document.getElementById('progress-bar').style.width = `${Math.min(pct, 100)}%`;
+    }
+
+    function handleChoice(stageNum, isCorrect) {
+        const fb = document.getElementById(`fb-${stageNum}`);
+        const buttons = document.querySelectorAll(`#stage-${stageNum} .choice-btn`);
+
+        if (isCorrect) {
+            const earned = failedOnce[stageNum] ? 0.5 : 1;
+            score += earned;
+            updateHud();
+
+            buttons.forEach(btn => btn.disabled = true);
+            fb.className = 'feedback-box show feedback-ok';
+            fb.textContent = `✅ Правильно! Ти отримуєш +${earned} бала. Відкриваємо наступний етап... 🚀`;
+
+            setTimeout(() => {
+                goToNextStage(stageNum + 1);
+            }, 1250);
+        } else {
+            if (!failedOnce[stageNum]) {
+                failedOnce[stageNum] = true;
+                fb.className = 'feedback-box show feedback-err';
+                fb.textContent = '❌ Не зовсім так! Перевір ключ-теорію вище та спробуй ще раз — за це завдання можна отримати 0,5 бала. 🔄';
+            } else {
+                buttons.forEach(btn => btn.disabled = true);
+                fb.className = 'feedback-box show feedback-err';
+                fb.textContent = '⚠️ Спроби вичерпано (0 балів за цей крок). Рухаємось далі, щоб не зупиняти квест! 💪';
+
+                setTimeout(() => {
+                    goToNextStage(stageNum + 1);
+                }, 1450);
+            }
+        }
+    }
+
+    function goToNextStage(nextNum) {
+        document.getElementById(`stage-${currentStage}`).classList.remove('active');
+        currentStage = nextNum;
+
+        if (currentStage <= totalStages) {
+            document.getElementById(`stage-${currentStage}`).classList.add('active');
+            updateHud();
+        } else {
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('stage-final').classList.add('active');
+            const formattedScore = score.toFixed(1).replace(/\.0$/, '');
+            document.getElementById('final-score').textContent = formattedScore;
+            document.getElementById('form-score').value = formattedScore;
+
+            let rank = '🎨 Юний дослідник графіки!';
+            if (score >= 10.5) rank = '🏆 Супер-дизайнер пікселів і векторів!';
+            else if (score >= 7.5) rank = '⚡ Впевнений майстер комп\'ютерної графіки!';
+            document.getElementById('rank-text').textContent = rank;
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Надсилання на Formspree через fetch з приємним сповіщенням
+    const formEl = document.getElementById('result-form');
+    formEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const statusBox = document.getElementById('submit-status');
+        statusBox.className = 'feedback-box show feedback-ok';
+        statusBox.textContent = '⏳ Надсилаємо твій результат учителю...';
+
+        try {
+            const resp = await fetch(formEl.action, {
+                method: 'POST',
+                body: new FormData(formEl),
+                headers: { 'Accept': 'application/json' }
+            });
+            if (resp.ok) {
+                statusBox.className = 'feedback-box show feedback-ok';
+                statusBox.textContent = '🎊 Результат успішно надіслано! Дякуємо за участь у квесті! 🌟';
+                formEl.querySelector('button[type="submit"]').disabled = true;
+            } else {
+                statusBox.className = 'feedback-box show feedback-err';
+                statusBox.textContent = '⚠️ Не вдалося надіслати форму. Перевір з\'єднання з Інтернетом і спробуй ще раз.';
+            }
+        } catch (err) {
+            statusBox.className = 'feedback-box show feedback-err';
+            statusBox.textContent = '⚠️ Помилка мережі під час відправки. Спробуй ще раз трохи згодом.';
+        }
+    });
+
+    updateHud();
+</script>
+
+</body>
+</html>
